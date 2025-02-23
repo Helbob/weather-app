@@ -1,101 +1,124 @@
+"use client";
 import Image from "next/image";
+import { useState } from "react";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [city, setCity] = useState("");
+  const [weather, setWeather] = useState(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  const getWeather = async () => {
+    try {
+      const response = await fetch(
+        `https://api.weatherapi.com/v1/forecast.json?key=${process.env.NEXT_PUBLIC_WEATHER_KEY}&q=${city}&days=3`
+      );
+      const data = await response.json();
+      setWeather(data);
+      console.log(data); // Check the forecast data in console
+    } catch (error) {
+      console.error("Error fetching weather:", error);
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    getWeather();
+  };
+
+  return (
+    <div className="bg-gray-900 min-h-screen text-white p-10 flex items-center justify-center">
+      <main className="flex justify-between gap-8 w-full max-w-6xl">
+        <div className="flex flex-col gap-4">
+          <form onSubmit={handleSubmit}>
+            <input
+              className="w-64 px-4 py-2 rounded-lg bg-slate-700 border border-slate-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder-slate-400 transition-all duration-200"
+              type="text"
+              placeholder="Enter a location..."
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          </form>
+          <div className="flex justify-between items-center gap-8">
+            <div className="flex-col">
+              <h1 className="text-6xl">
+                {weather?.location?.name || "Enter a location..."}
+              </h1>
+              <div className="flex gap-2">
+                <p className="text-2xl text-slate-400">Chance of rain:</p>
+                <p className="text-2xl text-white">
+                  {weather?.forecast?.forecastday[0]?.day
+                    ?.daily_chance_of_rain || 0}
+                  %
+                </p>
+              </div>
+              <p className="text-6xl">
+                {weather?.current?.temp_c
+                  ? `${weather.current.temp_c}°C`
+                  : "0°C"}
+              </p>
+            </div>
+            <Image
+              aria-hidden
+              src={
+                weather?.current?.condition?.icon
+                  ? `https:${weather.current.condition.icon.replace(
+                      "64x64",
+                      "128x128"
+                    )}`
+                  : "/globe.svg"
+              }
+              alt={weather?.current?.condition?.text || "Weather icon"}
+              width={128}
+              height={128}
+              unoptimized={true}
+              className="object-contain"
+            />
+          </div>
+          <div className="w-64 px-4 py-2 rounded-lg bg-slate-700">
+            {weather?.forecast?.forecastday?.map((day) => (
+              <div key={day.date}>
+                <p>Date: {day.date}</p>
+                <p>Max: {day.day.maxtemp_c}°C</p>
+                <p>Min: {day.day.mintemp_c}°C</p>
+                <p>Chance of rain: {day.day.daily_chance_of_rain}%</p>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="w-80 px-8 py-10 rounded-lg bg-slate-700 h-[calc(100vh-14rem)] overflow-y-auto">
+          <h2 className="text-xl mb-4">Hourly Forecast</h2>
+          {weather?.forecast?.forecastday[0]?.hour
+            ?.filter((hour) => {
+              const hourTime = new Date(hour.time);
+              const currentTime = new Date();
+              return hourTime >= currentTime;
+            })
+            .map((hour) => {
+              const time = new Date(hour.time).getHours();
+              return (
+                <div
+                  key={hour.time}
+                  className="flex justify-between items-center py-2 border-b border-slate-600"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{time}:00</span>
+                  </div>
+                  <div className="flex items-center gap-2 jutsify-evenly">
+                    <Image
+                      src={`https:${hour.condition.icon}`}
+                      alt={hour.condition.text}
+                      width={40}
+                      height={40}
+                    />
+                    <span>{hour.condition.text}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="text-slate-400">{hour.temp_c}°C</span>
+                  </div>
+                </div>
+              );
+            })}
         </div>
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }
