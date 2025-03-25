@@ -1,9 +1,9 @@
 "use client";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function Home() {
-  const [city, setCity] = useState("");
+  const [city, setCity] = useState("Copenhagen");
   const [weather, setWeather] = useState(null);
 
   const getWeather = async () => {
@@ -13,11 +13,14 @@ export default function Home() {
       );
       const data = await response.json();
       setWeather(data);
-      console.log(data); // Check the forecast data in console
     } catch (error) {
       console.error("Error fetching weather:", error);
     }
   };
+
+  useEffect(() => {
+    getWeather();
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -27,7 +30,7 @@ export default function Home() {
   return (
     <div className="bg-gray-900 min-h-screen text-white p-10 flex items-center justify-center">
       <main className="flex justify-between gap-8 w-full max-w-6xl">
-        <div className="flex flex-col gap-4">
+        <div className="w-[57%] flex flex-col gap-4">
           <form onSubmit={handleSubmit}>
             <input
               className="w-64 px-4 py-2 rounded-lg bg-slate-700 border border-slate-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder-slate-400 transition-all duration-200"
@@ -37,7 +40,7 @@ export default function Home() {
               onChange={(e) => setCity(e.target.value)}
             />
           </form>
-          <div className="flex justify-between items-center gap-8">
+          <div className="flex justify-between items-center gap-8 pb-[29%]">
             <div className="flex-col">
               <h1 className="text-6xl">
                 {weather?.location?.name || "Enter a location..."}
@@ -73,7 +76,7 @@ export default function Home() {
               className="object-contain"
             />
           </div>
-          <div className="w-64 px-4 py-2 rounded-lg bg-slate-700">
+          <div className="w-[100%] px-4 py-2 rounded-lg bg-slate-700">
             {weather?.forecast?.forecastday?.map((day) => (
               <div key={day.date}>
                 <p>Date: {day.date}</p>
@@ -84,7 +87,7 @@ export default function Home() {
             ))}
           </div>
         </div>
-        <div className="w-80 px-8 py-10 rounded-lg bg-slate-700 h-[calc(100vh-14rem)] overflow-y-auto">
+        <div className="w-[40%] px-8 py-10 rounded-lg bg-slate-700 h-[calc(100vh-14rem)] overflow-y-auto">
           <h2 className="text-xl mb-4">Hourly Forecast</h2>
           {weather?.forecast?.forecastday[0]?.hour
             ?.filter((hour) => {
